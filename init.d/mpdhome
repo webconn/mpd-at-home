@@ -1,5 +1,16 @@
 #!/bin/bash
 # vim: set ts=4 sw=4 sts=4:
+
+### BEGIN INIT INFO
+# Provides: 		mpdhome
+# Required-Start:    $local_fs $remote_fs mpd lirc
+# Required-Stop:     $local_fs $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: MPD@Home project
+### END INIT INFO
+
+
 # MPD @ Home project
 
 . /lib/lsb/init-functions
