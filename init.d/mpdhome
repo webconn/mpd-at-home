@@ -1,0 +1,63 @@
+#!/bin/bash
+# vim: set ts=4 sw=4 sts=4:
+# MPD @ Home project
+
+. /lib/lsb/init-functions
+. /etc/mpdhome/mpdhome.conf
+
+init_runtime() {
+    # /etc/mpdhome - for configs
+    # /etc/mpdhome/lirc.d - for LIRC scripts
+    # /var/run/mpdhome - status of mpdhome system
+
+        
+    ![ -d /etc/mpdhome ] && (mkdir /etc/mpdhome)
+    ![ -d /etc/mpdhome/lirc.d ] && (mkdir /etc/mpdhome/lirc.d)
+    ![ -d /var/run/mpdhome ] && (mkdir /var/run/mpdhome)
+    ![ -d /var/run/mpdhome/pid ] && (mkdir /var/run/mpdhome/pid)
+}
+
+start() {
+    log_daemon_msg "Starting MPD@Home" "mpdhome"
+
+    # Check for runtime directories and init them
+    init_runtime
+
+    # Run all LIRC scripts from daemon directory
+    if $MPDHOME_USE_LIRC; then
+        for scr in `ls -d /etc/mpdhome/lirc.d/*.lirc`; do
+            irexec $scr &
+            echo $! > /var/run/mpdhome/pid/$scr.pid
+        done
+    fi
+}
+
+stop() {
+    log_daemon_msg "Stopping MPD@Home" "mpdhome"
+    
+    # Stop all running scripts
+    for pid in `cat /var/run/mpdhome/pid/*.pid`; do
+        kill $pid
+    done
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    restart)
+        restart
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 2
+    ;;
+esac
