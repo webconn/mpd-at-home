@@ -10,11 +10,10 @@ init_runtime() {
     # /etc/mpdhome/lirc.d - for LIRC scripts
     # /var/run/mpdhome - status of mpdhome system
 
-        
-    ![ -d /etc/mpdhome ] && (mkdir /etc/mpdhome)
-    ![ -d /etc/mpdhome/lirc.d ] && (mkdir /etc/mpdhome/lirc.d)
-    ![ -d /var/run/mpdhome ] && (mkdir /var/run/mpdhome)
-    ![ -d /var/run/mpdhome/pid ] && (mkdir /var/run/mpdhome/pid)
+    ! [ -d /etc/mpdhome ] && (mkdir /etc/mpdhome)
+    ! [ -d /etc/mpdhome/lirc.d ] && (mkdir /etc/mpdhome/lirc.d)
+    ! [ -d /var/run/mpdhome ] && (mkdir /var/run/mpdhome)
+    ! [ -d /var/run/mpdhome/pid ] && (mkdir /var/run/mpdhome/pid)
 }
 
 start() {
@@ -24,21 +23,27 @@ start() {
     init_runtime
 
     # Run all LIRC scripts from daemon directory
-    if $MPDHOME_USE_LIRC; then
-        for scr in `ls -d /etc/mpdhome/lirc.d/*.lirc`; do
-            irexec $scr &
-            echo $! > /var/run/mpdhome/pid/$scr.pid
+    if [ -n "$MPDHOME_USE_LIRC" ]; then
+        for scr in `find -L /etc/mpdhome/lirc.d -name *.lirc`; do
+            fname=`echo ${scr/"/etc/mpdhome/lirc.d/"/} | tr '/' '-'`
+            irexec $scr 2>/dev/null 1>/dev/null &
+            echo $! > /var/run/mpdhome/pid/$fname.pid
         done
     fi
+    log_end_msg $?
 }
 
 stop() {
     log_daemon_msg "Stopping MPD@Home" "mpdhome"
-    
+
     # Stop all running scripts
-    for pid in `cat /var/run/mpdhome/pid/*.pid`; do
+    for pid in `find /var/run/mpdhome/pid/ -name *.pid | xargs cat`; do
         kill $pid
     done
+
+    rm -f /var/run/mpdhome/pid/*.pid
+
+    log_end_msg $?
 }
 
 restart() {
